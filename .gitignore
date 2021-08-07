@@ -1,0 +1,15 @@
+*~
+*.d
+*.o
+*.a
+*.dx86cl
+.DS_Store
+*.dump
+*.bytes
+*.xcuserstate
+xcdebugger
+*.tex
+
+# We add the generated files here too, to avoid seeing them in git status:
+notes-for-emc.pdf
+

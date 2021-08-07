@@ -1,0 +1,390 @@
+# -*- mode:org;coding:utf-8 -*-
+
+#+AUTHOR: Pascal J. Bourguignon
+#+EMAIL: pjb@informatimago.com
+#+DATE: 09 August 2021
+#+TITLE: Specifications of the ERGO Project Builder
+
+* Prologue                                                         :noexport:
+
+#+LATEX_HEADER: \usepackage[english]{babel}
+#+LATEX_HEADER: \usepackage[autolanguage]{numprint} % Must be loaded *after* babel.
+#+LATEX_HEADER: \usepackage{rotating}
+#+LATEX_HEADER: \usepackage{float}
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \usepackage[margin=0.75in]{geometry}
+
+# LATEX_HEADER: \usepackage{indentfirst}
+# LATEX_HEADER: \setlength{\parindent}{0pt}
+#+LATEX_HEADER: \usepackage{parskip}
+
+#+LATEX_HEADER: \usepackage{tikz}
+#+LATEX_HEADER: \usetikzlibrary{positioning, fit, calc, shapes, arrows}
+#+LATEX_HEADER: \usepackage[underline=false]{pgf-umlsd}
+#+LATEX_HEADER: \usepackage{lastpage}
+#+LATEX_HEADER: \pagestyle{fancyplain}
+#+LATEX_HEADER: \pagenumbering{arabic}
+#+LATEX_HEADER: \lhead{\small{ERGO Project Builder}}
+#+LATEX_HEADER: \chead{}
+#+LATEX_HEADER: \rhead{\small{Specifications ERGO Project Builder}}
+#+LATEX_HEADER: \lfoot{}
+#+LATEX_HEADER: \cfoot{\tiny{\copyright{} Pascal J. Bourguignon}}
+#+LATEX_HEADER: \rfoot{\small{Page \thepage \hspace{1pt} de \pageref{LastPage}}}
+
+* Introduction
+
+This document specifies the ERGO, a Project Dependencies Management
+Program, and Project Builder.
+
+** Structure of this document                                      :noexport:
+
+Paragraphs starting with "[Snnnn]" and ending with "¶" are tracable
+specification elements.  They may be extracted automatically to feed
+a tracing database.  They may be duplicated (same [Snnnn]  number) for
+legibility of the text.
+
+Note: within the brackets, there may be several S-numbers separated
+with dots, representing a hierachical dependency path.  A S-number may
+have several dependents ("parents") in the graph: the same
+specification items is reused in the specification of the parent item.
+
+Only the last S-number identifies the specification item (paragraph).
+
+
+These [Snnnn] numbers have some structure:
+
+| S1... | visualization      |
+| S2... | editing            |
+| S3... | management         |
+| S4... | sharing            |
+| S5... | Synthesizer / MIDI |
+| S6... | User Interface     |
+| S7... | Cloud features     |
+|-------+--------------------|
+| S.1.. | BankSet            |
+| S.2.. | Bank               |
+| S.3.. | Program            |
+| S.4.. | Directory          |
+| S.5.. | Synthesizer        |
+| S.6.. | Categories         |
+| S.7.. | MIDI               |
+
+
+# Ce document se compose de sections explicatives, et de sections plus
+# formelles, dont l'intitulé est composé de mot séparés par des points
+# en =police non-proportionnelle=.  Ces sections peuvent être extraites
+# automatiquement du source du document pour la traçabilité des
+# exigences.
+
+** Versions of this document :noexport:
+
+| Version | Date       | Modification                  | Author             |
+|---------+------------+-------------------------------+--------------------|
+|   0.0.1 | 2018/09/19 | Création.                     | Pascal Bourguignon |
+|---------+------------+-------------------------------+--------------------|
+|   0.0.2 | 2021/04/28 | Added Specification Item Tags | Pascal Bourguignon |
+|---------+------------+-------------------------------+--------------------|
+
+#+LATEX: \newpage
+
+* Purpose
+** Abstract
+
+ergo - Project Dependencies Management Program and Project Builder.
+
+The purpose of =ergo= is:
+
+1- fetch from =git= repositories a project and its dependencies.
+2- build the dependencies and the project.
+3- load, test or run the project.
+
+Building a project will depend on the kind of project, and may require
+some help from the user, specifying the commands to use.  However, it
+is expected that some common classes of projects be recognized and
+built automatically by =ergo=.  (The initial class of projects is that
+of Common Lisp systems defined =asd= files.)
+
+The loading, testing or running of the project will depend on the kind
+of project and environment, and may require some help from the user,
+specifying the commands to use.  However, it is expected that useful
+classes of projects can be recognized and handled automatically by
+=ergo=. (The initial class of projects is that of Common Lisp systems
+defined with =asd= files, that can be loaded in the current lisp
+image, and tested thru =asdf:test-op= (or some other expression
+specified by the user in the ergo file).  Running a Common Lisp system
+depends on the kind of system (libraries vs. stand alone programs
+vs. functions that can be called at the REPL), and would probably
+require some user input.
+
+
+In the most automatic and simple use case, typing the following expression:
+
+#+BEGIN_EXAMPLE
+(ergo:load :informatimago/lisp)
+#+END_EXAMPLE
+
+will automatically:
+
+1- =git clone git@github.com:informatimago/lisp.git= and any
+   dependency specified in the asd file found in this repository,
+
+2- =asdf:compile-op= the asd system present in this cloned repository,
+   and:
+
+3- =asdf:load-op= said asd system.
+
+** Discussion
+
+=asdf= doesn't assume any provenance for the systems.  It could be
+tarballs, ftp, git, mercurial, whatever.
+
+=quicklisp= itself doesn't assume any provenance for the systems
+either.
+
+There is a (approximately montly) quicklisp distribution production
+process, in which updates are taken from the quicklisp-projects
+repository, and the data in the =source.txt= files is used to update
+copies of the sources, test their compilations on some version of
+=sbcl=, and if it compiles successfully there, those sources are tared
+and stored for download by the quicklisp client.
+
+The =quicklisp= client uses data in
+=~/quicklisp/dists/quicklisp/releases.txt= to fetch the tarball.
+
+eg.:
+#+BEING_EXAMPLE
+1am http://beta.quicklisp.org/archive/1am/2014-11-06/1am-20141106-git.tgz 3490 c5e83c329157518e3ebfeef63e4ac269 83dfee1159cc630cc2453681a7caaf745f987d41 1am-20141106-git 1am.asd
+#+END_EXAMPLE
+
+So =(quickload :1am)= will fetch
+http://beta.quicklisp.org/archive/1am/2014-11-06/1am-20141106-git.tgz,
+untar it in =1am-20141106-git=, and will asdf load
+=1am-20141106-git/1am.asd=.
+
+To implement =quick-where-from=, I have to clone (or pull) the
+=quicklisp-project=, and search the =source.txt= files there.
+
+
+Note that some systems in quicklisp don't come from github/gitlab or
+git at all.  There are some mercurial, there are tarballs, etc.
+
+Also while =asdf= has some provision to deal with versions, it's not
+complete yet.  =Quicklisp= has no provision at all: you get the
+"current" version of the quicklisp distribution.
+
+(Also, remember that you can use other quicklisp distributions, such as
+the https://ultralisp.org).
+
+But for projects we have to deal with versions (branches, tags, and
+sometimes even specific commit).
+
+For example, the Google =repo= command (used for android sources)
+gathers git repositories and lists specific commits to integrate.
+
+A similar way with git submodules too.
+
+So we specify a new tool that uses only git references (gitlab, or
+github, or bare git repositories; future extensions could also allow
+mercurial, svn, fossil)  where instead of having a specific set of
+systems in a distribution, we would target (potentially) all the git
+repositories accessible on the Internet.  You would write a project
+definition file that would list the url and commit (or tag or branch)
+of all your dependencies, and the build system to use to build them
+(asdf, make, cmake, ant, whatever).  So a command would fetch or
+update them, and build them, including non CL (asd) dependencies.
+
+Some defaults and heuristics could be used to determine most of this
+meta-information automatically from the repositories.  For example, if
+there's an asd or an ergo file in a repository, it can be scanned to
+discover its own dependencies (and they may be located automatically).
+
+Allowing the reference of any git repository in the Internet makes it
+more useful and simplier to implement (there is no need for any
+management or curation of the system list).  For simple 1-system
+projects, even the ergo project definition file can be infered.
+
+#+BEGIN_EXAMPLE
+(project-load :informatimago/lisp)
+#+END_EXAMPLE
+
+would find =git://github.com:informatimago/lisp= alone and would find
+the =asd= file inside and load it.
+
+While:
+
+#+BEGIN_EXAMPLE
+(project-load :com-informatimago/com-informatimago)
+#+END_EXAMPLE
+
+would find =git://gitlab.com:com-informatimago/com-informatimago=
+alone and would find the =asd= file inside and load it.
+
+But users may write ergo project-definition files as mentionned for
+more complex projects requiring more dependencies or more specific
+dependencies.
+
+And the advantage is that we may also easily implement more advanced
+features using github/gitlab such as dealing with issues, merge
+request/pull requests, wiki, etc.
+
+I think we have a project here!
+
+#+BEGIN_EXAMPLE
+(ergo :my-project) ; loads my-project.ergo and downloads and compile stuff.
+#+END_EXAMPLE
+
+* Specifications
+** Repository Collections
+
+Sites like =gitlab.com= and =github.com= are repository collections
+proving a web interface to the git repositories, and additionnal
+features such as CI, Issue Management, wiki, etc.
+
+At the first level we'll use them as bare repository collection,
+allowing us to find a git repository url from a simplified designator
+(owner/repository).
+
+The ergo system manages an ordered list of repository collections each
+with various additionnal features, and a method to map simplified
+repository designator to git repository url.
+
+Additionnal features (eg. CI management, issue management, wiki, etc)
+will be implemented later.
+
+*** Mapping simplified repository designators to repository url
+
+=ergo= distinguishes 3 classes of repository collections:
+
+- gitlab repositories (not only http://gitlab.com/ but also any other site that uses the gitlab software).
+
+- the http://github.com repository collection.
+
+- custom repository collections.  
+
+  
+#+BEGIN_CODE lisp
+
+(defmethod repository-fetch-url (collection relative-path)
+  (format nil "~A@~A:~:[~A/~]~A~:[~A~]"
+          (collection-git-user      collection)
+          (collection-git-server    collection)
+          (collection-git-root      collection)
+          relative-path
+          (collection-git-extension collection)))
+#+END_CODE
+
+#+BEGIN_EXMPLE
+framasoft       git@git.framasoft.org:com-informatimago/com-informatimago.git (fetch)
+gitlab          git@gitlab.com:com-informatimago/com-informatimago.git (fetch)
+
+github          git@github.com:informatimago/lisp.git (fetch)
+
+origin          pjb@git.informatimago.com:/srv/git/public/lisp (fetch)
+#+END_EXAMPLE
+
+** Repository Designators
+
+*** Specific Repository Designator
+
+A completely specific repository designator is a compound structure containing:
+
+- a git repository (remote) pull url,
+- optionally, a branch, a tag, or a commit hash.
+
+If no branch, tag or commit hash is specified, then the repository
+designator designates the current HEAD of the master branch.  =ergo=
+will clone initially, and pull to get the latest version each time it
+needs to compile or load the system.
+
+If a branch is specified, then the the repository designator
+designates the current HEAD of the specified branch. =ergo= will clone
+the branch initially, and pull to get the latest version of the branch
+each time it needs to compile or load the system.
+
+If a tag is specified, then the the repository designator designates
+the specific tag in the repository.  =ergo= will clone the tag
+initially, and won't try to pull thereafter, since git tags are
+normally frozen.  (A command will be specified to force pulling and
+checking out the tag again, in case the history is rewritten).
+
+If a commit hash is specified, then the the repository designator
+designates the specific commit in the repository.  =ergo= will clone
+and checkout the commit initially, and won't try to pull thereafter,
+since git commits are normally frozen.  (A command will be specified
+to force pulling and checking out the commit again, in case the
+history is rewritten).
+
+#+BEGIN_EXAMPLE
+;; A master branch tracking repository designator:
+"git@gitlab.com:com-informatimago/com-informatimago.git"
+
+;; A specific branch tracking repository designator:
+("git@gitlab.com:patchwork/mclgui.git" "refactor")
+
+;; A specific tag repository designator:
+("git@gitlab.com:patchwork/mclgui.git" "Patchwork-10.1-0.838")
+
+;; A specific commit repository designator:
+("git@gitlab.com:patchwork/mclgui.git" "4d16a400a29c0683e4236f1c5fb61e4e09f56743")
+#+END_EXAMPLE
+
+*** Simplified Repository Designator
+
+Simplified Repository Designators are strings containing only a
+relative path which can be combined with a /repository collection/ to
+obtain a /specific repository designator/.
+
+The /simplified repository designator/
+="com-informatimago/com-informatimago"=  combined with the
+=gitlab.com= /repository collection/ will produce the /specific
+repository designator/:
+="git@gitlab.com:com-informatimago/com-informatimago.git"=.
+
+/Simplified repository designator/ may also be compounded with an
+optional branch, tag or commit hash:
+
+#+BEGIN_EXAMPLE
+;; A master branch tracking repository designator:
+"com-informatimago/com-informatimago"
+
+;; A specific branch tracking repository designator:
+("patchwork/mclgui" "refactor")
+
+;; A specific tag repository designator:
+("patchwork/mclgui" "Patchwork-10.1-0.838")
+
+;; A specific commit repository designator:
+("patchwork/mclgui" "4d16a400a29c0683e4236f1c5fb61e4e09f56743")
+#+END_EXAMPLE
+
+Note: since the actual /specific repository designator/ selected will
+depend on the order of the /repository collection/ in the search,
+/simplified repository designators/ are a convenience that should only
+be used carefully.  Notably mirrors don't always have the same
+relative path in different repository collections, or a given relative
+path may designate different repositories (forks in the best case,
+sometimes completely different projects), in different repository
+collections.
+
+Therefore it will be safer to use specific repository designators in
+ergo project files.
+
+** Ergo Project File
+
+
+#+BEGIN_EXAMPLE
+#+END_EXAMPLE
+
+** Class of Project
+
+Once a repository is fetched, =ergo= must identify the class of project.
+
+* Epilogue                                                         :noexport:
+
+# not-eval: (set-input-method 'latin-1-prefix)
+
+
+# Local Variables:
+# eval: (auto-fill-mode 1)
+# End:
+
