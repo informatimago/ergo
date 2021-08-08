@@ -580,7 +580,7 @@ other identifying information.
 (ergo:chpro foo/quux)
 
 
---> basically, git commands + make/asdf/ant workflow.
+--> basically, git commands + make/asdf/ant workflow.issue
 --> current project = current clone = current directory
 --> navigate dependency projects
 --> add/remove/change dependency projects
@@ -590,9 +590,27 @@ if ro, fork on github, gitlab, etc, or *local*, optional create branch, edit, co
 
 --> creation new project = repo: local, github, gitlab
 
+** issues
+
+(ergo:issues [criteria]) ; query and report issues
+(ergo:new-issue ...) ; create new issue (github, gitlab); local: add a TODO in ISSUES.org
+(ergo:issue start) -> in progress, create/switch branch
+(ergo:issue done) -> commit, mr/pr, issue done
+
+** wiki
+
+browse the wiki, edit the wiki (calls $VISUAL)
+
+** CI
+
+launch pipelines
+create/edit pipelines
+
+
+
 
 * Epilogue                                                         :noexport:
-
+ 
 # not-eval: (set-input-method 'latin-1-prefix)
 
 # Local Variables:
