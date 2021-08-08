@@ -562,6 +562,35 @@ Perform all the actions that can be performed on the project:
 Report where the project is from (git url, branch/tag/commit) and any
 other identifying information.
 
+* Use cases
+** fork
+(ergo:load foo/bar) ; clone github/foo/bar, compile, load
+;; find a bug
+(ergo:fork [foo/bar]) ; fork the repo on github with preconfigured account; update project
+--> github/myself/bar ; and change the remote
+(ergo:where [myself/bar]) ; shows the directory/cd/*default-pathname-defaults*
+(ergo:edit file.lisp)
+(ergo:load [])
+(ergo:commit -a -m "...")
+(ergo:push [])
+(ergo:merge-request)
+(ergo:pull-request)
+(ergo:pull)
+
+(ergo:chpro foo/quux)
+
+
+--> basically, git commands + make/asdf/ant workflow.
+--> current project = current clone = current directory
+--> navigate dependency projects
+--> add/remove/change dependency projects
+--> edit current project sources = if write access to the repo, optional create branch, edit, commit, push
+if ro, fork on github, gitlab, etc, or *local*, optional create branch, edit, commit, push
+
+
+--> creation new project = repo: local, github, gitlab
+
+
 * Epilogue                                                         :noexport:
 
 # not-eval: (set-input-method 'latin-1-prefix)
