@@ -37,22 +37,22 @@ This document specifies the ERGO, a Project Dependencies Management
 Program, and Project Builder.
 
 # ** Structure of this document                                      :noexport:
-# 
+#
 # Paragraphs starting with "[Snnnn]" and ending with "¶" are tracable
 # specification elements.  They may be extracted automatically to feed
 # a tracing database.  They may be duplicated (same [Snnnn]  number) for
 # legibility of the text.
-# 
+#
 # Note: within the brackets, there may be several S-numbers separated
 # with dots, representing a hierachical dependency path.  A S-number may
 # have several dependents ("parents") in the graph: the same
 # specification items is reused in the specification of the parent item.
-# 
+#
 # Only the last S-number identifies the specification item (paragraph).
-# 
-# 
+#
+#
 # These [Snnnn] numbers have some structure:
-# 
+#
 # | S1... | visualization      |
 # | S2... | editing            |
 # | S3... | management         |
@@ -260,10 +260,10 @@ will be implemented later.
 - the http://github.com repository collection.
 
 - gitea repositories https://gitea.io/en-us/
-  
-- custom repository collections.  
 
-  
+- custom repository collections.
+
+
 #+BEGIN_CODE lisp
 
 (defmethod repository-fetch-url (collection relative-path)
@@ -418,7 +418,7 @@ Then one could write an =ergo= project file such as:
 #+BEGIN_CODE lisp
 (ergo:project
  :designator "git@gitlab.com:informatimago/clage.git"
- 
+
  :dependencies ((git "https://github.com/sharplispers/ironclad.git"       :tag :latest)
                 (git "https://github.com/cl-babel/babel.git"              :release :latest)
                 (git "https://github.com/sharplispers/split-sequence.git" :tag "v2.0.0")
@@ -568,7 +568,7 @@ other identifying information.
 ;; find a bug
 (ergo:fork [foo/bar]) ; fork the repo on github with preconfigured account; update project
 --> github/myself/bar ; and change the remote
-(ergo:where [myself/bar]) ; shows the directory/cd/*default-pathname-defaults*
+(ergo:where-is [myself/bar]) ; shows the directory/cd/*default-pathname-defaults*
 (ergo:edit file.lisp)
 (ergo:load [])
 (ergo:commit -a -m "...")
@@ -610,7 +610,7 @@ create/edit pipelines
 
 
 * Epilogue                                                         :noexport:
- 
+
 # not-eval: (set-input-method 'latin-1-prefix)
 
 # Local Variables:
