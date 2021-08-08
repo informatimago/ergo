@@ -276,12 +276,15 @@ will be implemented later.
 #+END_CODE
 
 #+BEGIN_EXMPLE
-framasoft       git@git.framasoft.org:com-informatimago/com-informatimago.git (fetch)
-gitlab          git@gitlab.com:com-informatimago/com-informatimago.git (fetch)
+common-lisp     https://gitlab.common-lisp.net/asdf/asdf.git
 
-github          git@github.com:informatimago/lisp.git (fetch)
+framasoft       git@git.framasoft.org:com-informatimago/com-informatimago.git
 
-origin          pjb@git.informatimago.com:/srv/git/public/lisp (fetch)
+gitlab          git@gitlab.com:com-informatimago/com-informatimago.git
+
+github          git@github.com:informatimago/lisp.git
+
+origin          pjb@git.informatimago.com:/srv/git/public/lisp
 #+END_EXAMPLE
 
 ** Repository Designators
@@ -462,6 +465,44 @@ the clones.
 
 But production projects may specify specific commits, and require
 their own clones to avoid any conflict.
+
+** ASDF
+
+*** =asdf:*central-registry*=
+
+Let's say we store the repositories in =~/ergo/repositories/=
+
+#+BEGIN_EXAMPLE
+~/ergo/repositories/{git-server}/{relative/path}/{branch-or-tag-or-commit}/.git/
+#+END_EXAMPLE
+
+Now we need to specify to asdf what directory to search for
+systems. Since different projects may need different versions of a
+dependencies, =ergo= will have to specify the directories of the
+specific cloned repositories for =asdf= to find the =asd= files.
+
+#+BEGIN_EXAMPLE
+(ergo:compile "path-3")
+#+END_EXAMPLE
+
+would do:
+
+#+BEGIN_EXAMPLE
+(let ((asdf:*central-registry*
+       '(#P"~/ergo/repositories/{git-server}/{relative/path-1}/branch-1/"
+         #P"~/ergo/repositories/{git-server}/{relative/path-2}/tag-2/"
+         #P"~/ergo/repositories/{git-server}/{relative/path-3}/1d69dbba33a8e51ca287c11637b6051ffcda9d06/")))
+   (asdf:oos 'asdf:compile-op "path-3"))
+#+END_EXAMPLE
+
+Perhaps we can shadow similarly the current configuration which could
+be beneficial to specify :tree repos clones.
+
+*** =asdf/output-translations:*output-translations*=
+
+We should check that =asdf/output-translations:*output-translations*=
+doesn't collude output directories, and perhaps shadow it similarly to
+=asdf:*central-registry*=
 
 ** Class of Project
 
