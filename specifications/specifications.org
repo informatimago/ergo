@@ -321,16 +321,16 @@ history is rewritten).
 
 #+BEGIN_EXAMPLE
 ;; A master branch tracking repository designator:
-"git@gitlab.com:com-informatimago/com-informatimago.git"
+(git "git@gitlab.com:com-informatimago/com-informatimago.git")
 
 ;; A specific branch tracking repository designator:
-("git@gitlab.com:patchwork/mclgui.git" "refactor")
+(git "git@gitlab.com:patchwork/mclgui.git" :branch "refactor")
 
 ;; A specific tag repository designator:
-("git@gitlab.com:patchwork/mclgui.git" "Patchwork-10.1-0.838")
+(git "git@gitlab.com:patchwork/mclgui.git" :tag "Patchwork-10.1-0.838")
 
 ;; A specific commit repository designator:
-("git@gitlab.com:patchwork/mclgui.git" "4d16a400a29c0683e4236f1c5fb61e4e09f56743")
+(git "git@gitlab.com:patchwork/mclgui.git" :commit "4d16a400a29c0683e4236f1c5fb61e4e09f56743")
 #+END_EXAMPLE
 
 *** Simplified Repository Designator
@@ -382,7 +382,7 @@ designator or local =ergo= project file, containing only the
 designator of the project; the dependencies will be taken from the
 =ergo= project file in the repository.
 
-However, initially very few repository will contain =ergo= project
+However, initially very few repositories will contain =ergo= project
 files, so a user may write a complete =ergo= project file listing all
 the dependencies.
 
@@ -419,16 +419,16 @@ Then one could write an =ergo= project file such as:
 (ergo:project
  :designator "git@gitlab.com:informatimago/clage.git"
  
- :dependencies (("https://github.com/sharplispers/ironclad.git"        :latest-tag)
-                ("https://github.com/cl-babel/babel.git"               :latest-release)
-                ("https://github.com/sharplispers/split-sequence.git" "v2.0.0")
-                ("https://github.com/agrostis/diff-match-patch.git"   "pro")
-                "git@gitlab.com:com-informatimago/com-informatimago.git")
+ :dependencies ((git "https://github.com/sharplispers/ironclad.git"       :tag :latest)
+                (git "https://github.com/cl-babel/babel.git"              :release :latest)
+                (git "https://github.com/sharplispers/split-sequence.git" :tag "v2.0.0")
+                (git "https://github.com/agrostis/diff-match-patch.git"   :branch "pro")
+                (git "git@gitlab.com:com-informatimago/com-informatimago.git")
 
- :build (:asdf "com.informatimago.clage")
- :load  (:asdf "com.informatimago.clage")
- :test  (:asdf "com.informatimago.clage.test")
- :run   (:lisp "(clage:main)")
+ :build (asdf "com.informatimago.clage")
+ :load  (asdf "com.informatimago.clage")
+ :test  (asdf "com.informatimago.clage.test")
+ :run   (lisp "(clage:main)")
 
 
  ;; The rest is only docstrings, possibly redundant with an asd
