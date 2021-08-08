@@ -253,12 +253,14 @@ will be implemented later.
 
 *** Mapping simplified repository designators to repository url
 
-=ergo= distinguishes 3 classes of repository collections:
+=ergo= distinguishes 4 classes of repository collections:
 
 - gitlab repositories (not only http://gitlab.com/ but also any other site that uses the gitlab software).
 
 - the http://github.com repository collection.
 
+- gitea repositories https://gitea.io/en-us/
+  
 - custom repository collections.  
 
   
