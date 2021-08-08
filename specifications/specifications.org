@@ -36,38 +36,38 @@
 This document specifies the ERGO, a Project Dependencies Management
 Program, and Project Builder.
 
-** Structure of this document                                      :noexport:
-
-Paragraphs starting with "[Snnnn]" and ending with "¶" are tracable
-specification elements.  They may be extracted automatically to feed
-a tracing database.  They may be duplicated (same [Snnnn]  number) for
-legibility of the text.
-
-Note: within the brackets, there may be several S-numbers separated
-with dots, representing a hierachical dependency path.  A S-number may
-have several dependents ("parents") in the graph: the same
-specification items is reused in the specification of the parent item.
-
-Only the last S-number identifies the specification item (paragraph).
-
-
-These [Snnnn] numbers have some structure:
-
-| S1... | visualization      |
-| S2... | editing            |
-| S3... | management         |
-| S4... | sharing            |
-| S5... | Synthesizer / MIDI |
-| S6... | User Interface     |
-| S7... | Cloud features     |
-|-------+--------------------|
-| S.1.. | BankSet            |
-| S.2.. | Bank               |
-| S.3.. | Program            |
-| S.4.. | Directory          |
-| S.5.. | Synthesizer        |
-| S.6.. | Categories         |
-| S.7.. | MIDI               |
+# ** Structure of this document                                      :noexport:
+# 
+# Paragraphs starting with "[Snnnn]" and ending with "¶" are tracable
+# specification elements.  They may be extracted automatically to feed
+# a tracing database.  They may be duplicated (same [Snnnn]  number) for
+# legibility of the text.
+# 
+# Note: within the brackets, there may be several S-numbers separated
+# with dots, representing a hierachical dependency path.  A S-number may
+# have several dependents ("parents") in the graph: the same
+# specification items is reused in the specification of the parent item.
+# 
+# Only the last S-number identifies the specification item (paragraph).
+# 
+# 
+# These [Snnnn] numbers have some structure:
+# 
+# | S1... | visualization      |
+# | S2... | editing            |
+# | S3... | management         |
+# | S4... | sharing            |
+# | S5... | Synthesizer / MIDI |
+# | S6... | User Interface     |
+# | S7... | Cloud features     |
+# |-------+--------------------|
+# | S.1.. | BankSet            |
+# | S.2.. | Bank               |
+# | S.3.. | Program            |
+# | S.4.. | Directory          |
+# | S.5.. | Synthesizer        |
+# | S.6.. | Categories         |
+# | S.7.. | MIDI               |
 
 
 # Ce document se compose de sections explicatives, et de sections plus
@@ -78,12 +78,12 @@ These [Snnnn] numbers have some structure:
 
 ** Versions of this document :noexport:
 
-| Version | Date       | Modification                  | Author             |
-|---------+------------+-------------------------------+--------------------|
-|   0.0.1 | 2018/09/19 | Création.                     | Pascal Bourguignon |
-|---------+------------+-------------------------------+--------------------|
-|   0.0.2 | 2021/04/28 | Added Specification Item Tags | Pascal Bourguignon |
-|---------+------------+-------------------------------+--------------------|
+| Version | Date       | Modification | Author             |
+|---------+------------+--------------+--------------------|
+|   0.0.1 | 2021/08/08 | Created.     | Pascal Bourguignon |
+|---------+------------+--------------+--------------------|
+|   0.0.2 |            |              |                    |
+|---------+------------+--------------+--------------------|
 
 #+LATEX: \newpage
 
@@ -371,13 +371,111 @@ ergo project files.
 
 ** Ergo Project File
 
+=ergo= project files may be stored in the repositories, specifying the
+dependencies.  The user may then fetch the project with a simplified
+designator or local =ergo= project file, containing only the
+designator of the project; the dependencies will be taken from the
+=ergo= project file in the repository.
+
+However, initially very few repository will contain =ergo= project
+files, so a user may write a complete =ergo= project file listing all
+the dependencies.
+
 
 #+BEGIN_EXAMPLE
+(ergo:project
+    :designator <designator>
+    :dependencies (<designator> …)
+
+    ;; The rest is only docstrings:
+    :name <string>
+    :description <string>
+    :author <string>
+    :date <string>
+    :version <string>)
 #+END_EXAMPLE
+
+Note: clage contains a com.informatimago.clage.asd file, with the
+following asdf system dependencies:
+
+#+BEGIN_EXAMPLE
+("ironclad"
+ "babel"
+ "split-sequence"
+ "diff-match-patch"
+ "com.informatimago.common-lisp.cesarum"
+ "com.informatimago.clext.shell"
+ "com.informatimago.clext.character-sets")
+#+END_EXAMPLE
+
+Then one could write an =ergo= project file such as:
+
+#+BEGIN_CODE lisp
+(ergo:project
+ :designator "git@gitlab.com:informatimago/clage.git"
+ 
+ :dependencies (("https://github.com/sharplispers/ironclad.git"        :latest-tag)
+                ("https://github.com/cl-babel/babel.git"               :latest-release)
+                ("https://github.com/sharplispers/split-sequence.git" "v2.0.0")
+                ("https://github.com/agrostis/diff-match-patch.git"   "pro")
+                "git@gitlab.com:com-informatimago/com-informatimago.git")
+
+ :build (:asdf "com.informatimago.clage")
+ :load  (:asdf "com.informatimago.clage")
+ :test  (:asdf "com.informatimago.clage.test")
+ :run   (:lisp "(clage:main)")
+
+
+ ;; The rest is only docstrings, possibly redundant with an asd
+ ;; file, but not all projects are asdf projects.:
+ :name "clage"
+ :description "Common Lisp - Atelier de Génie Logiciel"
+ :author "Pascal J. Bourguignon"
+ :version "1.0.1"
+ :license "AGPL3")
+#+END_EXAMPLE
+
+Notes:
+
+- gitlab and github have a notion of release and an API to list them
+  (probably tag-based).  Keywords such as :latest-tag :latest-release
+  let us select a tag or release that is selected by date or in the
+  release list.
+
+- when multiple asdf systems are defined in a project, the ergo
+  project dependency needs to list only one dependency project.
+
+** Cloning
+
+Since different projects may use different versions of a same
+repository, we will have to clone the dependencies in separate local
+repositories with different checked out branches, tags or commit.
+
+=ergo= can however unify the dependency clone when the same version is
+required, unless it's flagged out in the project file.
+
+It is expected that a lot of projects are just tracking the head of
+the main branch of their dependencies, so there's no need to duplicate
+the clones.
+
+But production projects may specify specific commits, and require
+their own clones to avoid any conflict.
 
 ** Class of Project
 
-Once a repository is fetched, =ergo= must identify the class of project.
+Once a repository is fetched, =ergo= must identify the class of
+project.  This can be done by analysing the contents of the clone and
+applying some heuristics:
+
+- mainly .lisp with a few .asd -> asdf system
+- mainly .c with a few Makefile -> make system
+- mainly .swift or .m with a .xcodeproj -> xcodebuid system
+- mainly .java with a .ant file -> ant system
+etc.
+
+However a given repository may contain subprojects using different
+build system, and the user may have to specify the build, load, test
+and run commands in the ergo file.
 
 * Epilogue                                                         :noexport:
 
