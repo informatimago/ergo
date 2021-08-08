@@ -520,10 +520,51 @@ However a given repository may contain subprojects using different
 build system, and the user may have to specify the build, load, test
 and run commands in the ergo file.
 
+
+* Commands
+
+** =ergo:project= &key designator dependencies &allow-other-keys    [macro]
+
+Defines an =ergo= project.
+
+** =ergo:compile= designator                                     [function]
+
+Download the project and its dependencies, and compile them.
+
+** =ergo:load=    designator                                     [function]
+
+Download the project and its dependencies, compile them, and load the
+project.
+
+** =ergo:test=    designator                                     [function]
+
+Download the project and its dependencies, compile them, and test the
+project.
+
+** =ergo:run=     designator                                     [function]
+
+Download the project and its dependencies, compile them, load the
+project and run it.  The actual semantics of running a project depends
+on the project and needs to be specified in the =ergo= project file.
+It would be No-Operation by default.
+
+** =ergo:ergo=    designator                                     [function]
+
+Perform all the actions that can be performed on the project:
+- Download (clone or pull) the project and its dependencies,
+- Compile them,
+- Load the project,
+- Test the project,
+- If possible run the project.
+
+** =ergo:where-from= designator                                  [function]
+
+Report where the project is from (git url, branch/tag/commit) and any
+other identifying information.
+
 * Epilogue                                                         :noexport:
 
 # not-eval: (set-input-method 'latin-1-prefix)
-
 
 # Local Variables:
 # eval: (auto-fill-mode 1)
