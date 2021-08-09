@@ -38,7 +38,7 @@
   :version "0.0.0"
   :license "AGPL3"
   :depends-on ("uiop"
-               "split-sequence"
+               "split-sequence" "cl-ppcre"
                "com.informatimago.common-lisp.cesarum")
   :components ((:file "packages"        :depends-on ())
                (:file "prototype"       :depends-on ("packages")))

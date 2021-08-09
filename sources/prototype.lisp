@@ -39,6 +39,13 @@
   (declare (ignore pathname))
   nil)
 
+(defvar *verbose* t)
+(defun verbose-command (command)
+  (when *verbose*
+    (format *trace-output* "$ ~A~%" command))
+  command)
+
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
 
   (defun normalize-symbol (symbol-designator)
@@ -103,27 +110,29 @@
 
 
 (defparameter *collections*
-  (list (make-instance 'git-collection
-                       :name "common-lisp.net"
-                       :protocol :ssh
-                       :user "git"
-                       :server "common-lisp.net"
-                       :extension ".git"
-                       :kind :gitlab)
-        (make-instance 'git-collection
-                       :name "gitlab.com"
-                       :user "git"
-                       :server "gitlab.com"
-                       :root nil
-                       :extension ".git"
-                       :kind :gitlab)
-        (make-instance 'git-collection
-                       :name "github.com"
-                       :user "git"
-                       :server "github.com"
-                       :root nil
-                       :extension ".git"
-                       :kind :github))
+  (list
+   ;; "https://salsa.debian.org/debian/schroot"
+   (make-instance 'git-collection
+                  :name "common-lisp.net"
+                  :protocol :ssh
+                  :user "git"
+                  :server "common-lisp.net"
+                  :extension ".git"
+                  :kind :gitlab)
+   (make-instance 'git-collection
+                  :name "gitlab.com"
+                  :user "git"
+                  :server "gitlab.com"
+                  :root nil
+                  :extension ".git"
+                  :kind :gitlab)
+   (make-instance 'git-collection
+                  :name "github.com"
+                  :user "git"
+                  :server "github.com"
+                  :root nil
+                  :extension ".git"
+                  :kind :github))
   "Priority ordered list of repository collections.")
 
 
@@ -164,8 +173,9 @@
                      (repository-local-path repository))))
 
 (defgeneric repository-builder (repository))
-(defgeneric build-repository (repository))
-(defgeneric build (repository builder))
+(defgeneric build-repository (repository dependency-directories))
+(defgeneric build (repository builder dependency-directories))
+(defgeneric repository-asdf-system (repository builder))
 
 
 (defclass builder ()
@@ -174,6 +184,10 @@
 (defclass asdf-builder (builder)
   ((asd-file :initarg :asd-file :reader asd-file)))
 
+(defmethod repository-asdf-system ((repository repository) (builder asdf-builder))
+  ;; TODO: repository-asdf-system it's not that good to use an infered system to build a repository! The user should choose the root asdf system, and asdf gives us the dependencies systesm.
+  ;; Silly Q&D system name from asd file:
+  (pathname-name (asd-file builder)))
 
 (defmethod repository-builder ((repository repository))
   (let ((asd-file (first (sort (directory (merge-pathnames "*.asd" (repository-local-path repository)))
@@ -182,12 +196,12 @@
     (when (probe-file asd-file)
       (make-instance 'asdf-builder :asd-file asd-file))))
 
-(defmethod build-repository ((repository repository))
-  (build repository (repository-builder repository)))
+(defmethod build-repository ((repository repository) dependency-directories)
+  (build repository (repository-builder repository) dependency-directories))
 
-(defmethod build ((repository repository) (builder asdf-builder))
-  (let (()))
-  )
+(defmethod build ((repository repository) (builder asdf-builder) dependency-directories)
+  (let ((asdf:*central-registry* dependency-directories))
+    (asdf:oos 'asdf:load-op (repository-asdf-system repository builder))))
 
 ;;; --------------------------------------------------------------------------
 ;;; repository designator
@@ -306,7 +320,7 @@
                                          repo-path nil))
             (return-designator)
             ;; try to clone:
-            (handler-case (uiop:run-program (format nil "git clone ~S ~S" repo-url (namestring repo-path))
+            (handler-case (uiop:run-program (verbose-command (format nil "git clone ~S ~S" repo-url (namestring repo-path)))
                                             :output :interactive
                                             :error-output t
                                             :ignore-error-status nil)
@@ -349,9 +363,9 @@
                local-path nil)))
 
 (defmethod clone-repository ((designator git-repository-designator) local-path)
-  (handler-case (uiop:run-program (format nil "git clone ~S ~S"
-                                          (designator-url designator)
-                                          (namestring local-path))
+  (handler-case (uiop:run-program (verbose-command (format nil "git clone ~S ~S"
+                                                           (designator-url designator)
+                                                           (namestring local-path)))
                                   :output :interactive
                                   :error-output t
                                   :ignore-error-status nil)
@@ -361,8 +375,8 @@
       nil)))
 
 (defmethod pull-repository ((designator git-repository-designator) local-path)
-  (handler-case (uiop:run-program (format nil "cd ~S && git pull"
-                                          (namestring local-path))
+  (handler-case (uiop:run-program (verbose-command (format nil "cd ~S && git pull"
+                                                           (namestring local-path)))
                                   :force-shell t
                                   :output :interactive
                                   :error-output t
@@ -407,11 +421,11 @@
                             :designator   (parse-repository-designator ',designator)
                             :dependencies (mapcar (function parse-repository-designator)
                                                   ',dependencies)
-                            ,@(quote-elements (loop
-                                                :for (key value) :on attributes :by (function cddr)
-                                                :unless (member key '(:designator :dependencies))
-                                                  :collect key :collect value))))))
-
+                            :attributes (list ,@(quote-elements
+                                                 (loop
+                                                   :for (key value) :on attributes :by (function cddr)
+                                                   :if (not (member key '(:designator :dependencies)))
+                                                     :collect key :and :collect value)))))))
 
 
 
@@ -421,7 +435,8 @@
   project)
 
 (defmethod resolve-project ((designator repository-designator))
-  repository-designator)
+  (error "not implemented yet")
+  designator)
 
 (defmethod resolve-project ((designator list))
   (resolve-project (parse-repository-designator designator)))
@@ -433,20 +448,33 @@
   (resolve-project (parse-repository-designator designator)))
 
 
+(defgeneric project-repositories-local-directories (project)
+  (:documentation "List all local directories of the repositories of the project and dependencies."))
 (defgeneric update-project (project))
 (defgeneric build-project (project))
 
+
+;; TODO: revise this dichotomy between (project-repository project) and  (project-dependencies project) and the recursions in dependencies.
+
+(defmethod project-repositories-local-directories ((project project))
+  (cons (project-local-path project)
+        (mapcan (function project-repositories-local-directories)
+                (project-dependencies project))))
+
+(defmethod project-repositories-local-directories ((repository repository))
+  (copy-list (repository-local-path repository)))
+
+
 (defmethod update-project ((project project))
-  ;; TODO: Naive dependency updates!
-  (dolist (dependency (project-dependencies project))
-    (update-project dependency))
-  (update-repository (project-repository project)))
+  ;; TODO: this is a naive dependency update; make it better.
+  (dolist (dependency (cons (project-repository project) (project-dependencies project)))
+    (update dependency)))
 
 (defmethod build-project ((project project))
   ;; TODO: Naive dependency builds!
-  (dolist (dependency (project-dependencies project))
-    (build-project dependency))
-  (build-repository (project-repository project)))
+  (let ((dependency-directories (project-repositories-local-directories project)))
+    (dolist (dependency (cons (project-repository project) (project-dependencies project)))
+      (build-repository dependency dependency-directories))))
 
 
 ;;; --------------------------------------------------------------------------

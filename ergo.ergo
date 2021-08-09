@@ -35,7 +35,8 @@
 (ergo:project
  :designator    (git "git@gitlab.com:informatimago/ergo.git")
  :dependencies ((git "git@gitlab.com:com-informatimago/com-informatimago.git")
-                (git "git@github.com:sharplispers/split-sequence.git"))
+                (git "git@github.com:sharplispers/split-sequence.git" :tag "v2.0.1")
+                (git "git@github.com:edicl/cl-ppcre.git" :tag "v2.1.1"))
 
  ;; docstrings:
  :description "ergo - Project Dependencies Management Program and Project Builder"
