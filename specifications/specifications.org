@@ -294,7 +294,26 @@ origin          pjb@git.informatimago.com:/srv/git/public/lisp
 A completely specific repository designator is a compound structure containing:
 
 - a git repository (remote) pull url,
-- optionally, a branch, a tag, or a commit hash.
+- optionally, a branch, a tag, a release, or a commit hash specification.
+- optionally, a kind keyword, to characterize the kind of collection
+  the repository is stored in (gitlab, github, gitea, plain).
+
+#+BEGIN_EXAMPLE
+(git <url> [:kind gitlab|github|gitea|plain]
+           [ :branch  <name>
+           | :tag     <name> | :latest ] |
+           | :release <name> | :latest ] |
+           | :commit  <hash> ])
+#+END_EXAMPLE
+
+If the kind is not given, it is infered from the url:
+
+| host of url     | kind   |
+|-----------------+--------|
+| is github.com   | github |
+| contains gitlab | gitlab |
+| contains gitea  | gitea  |
+| else            | plain  |
 
 If no branch, tag or commit hash is specified, then the repository
 designator designates the current HEAD of the master branch.  =ergo=
@@ -520,7 +539,6 @@ However a given repository may contain subprojects using different
 build system, and the user may have to specify the build, load, test
 and run commands in the ergo file.
 
-
 * Commands
 
 ** =ergo:project= &key designator dependencies &allow-other-keys    [macro]
@@ -605,9 +623,6 @@ browse the wiki, edit the wiki (calls $VISUAL)
 
 launch pipelines
 create/edit pipelines
-
-
-
 
 * Epilogue                                                         :noexport:
 
