@@ -1,47 +1,46 @@
-# ergo - Project Dependencies Management Program.
+# ergo - Project Dependencies Management Program and Project Builder.
 
-Very early notes about a project idea:
+The purpose of `ergo` is:
 
-Well, asdf doesn't assume any provenance for the systems. It could be tarballs, ftp, git, mercurial, whatever.
+1- fetch from `git` repositories a project and its dependencies.
+2- build the dependencies and the project.
+3- load, test or run the project.
 
-quicklisp itself doesn't assume any provenance for the systems either.
+Building a project will depend on the kind of project, and may require
+some help from the user, specifying the commands to use.  However, it
+is expected that some common classes of projects be recognized and
+built automatically by `ergo`.  (The initial class of projects is that
+of Common Lisp systems defined `asd` files.)
 
-there is a (approximately montly) quicklisp distribution production process run by Xach, in which he takes updates on the quicklisp-projects repository, and use the data in the source.txt files, to update copies of the sources, test their compilations on sbcl (the current version Xach is running), and if it compiles successfully there, those sources are tared and  stored for download by the quicklisp client.
+The loading, testing or running of the project will depend on the kind
+of project and environment, and may require some help from the user,
+specifying the commands to use.  However, it is expected that useful
+classes of projects can be recognized and handled automatically by
+`ergo`. (The initial class of projects is that of Common Lisp systems
+defined with `asd` files, that can be loaded in the current lisp
+image, and tested thru `asdf:test-op` (or some other expression
+specified by the user in the ergo file).  Running a Common Lisp system
+depends on the kind of system (libraries vs. stand alone programs
+vs. functions that can be called at the REPL), and would probably
+require some user input.
 
-The quicklisp client uses data in ~/quicklisp/dists/quicklisp/releases.txt to fetch the tarball.
 
-eg.: 1am http://beta.quicklisp.org/archive/1am/2014-11-06/1am-20141106-git.tgz 3490 c5e83c329157518e3ebfeef63e4ac269 83dfee1159cc630cc2453681a7caaf745f987d41 1am-20141106-git 1am.asd
-
-so (quickload :1am) will fetch http://beta.quicklisp.org/archive/1am/2014-11-06/1am-20141106-git.tgz, untar it in 1am-20141106-git, and will asdf load 1am-20141106-git/1am.asd
-
-To implement quick-where-from, I have to clone (or pull) the quicklisp-project, and search the source.txt files there.
-
-I posted this feature request: https://github.com/quicklisp/quicklisp-client/issues/210 (I don't count on it to be acted upon any time soon either).
-
-Note that some systems in quicklisp don't come from github/gitlab or git at all. There are some mercurial, there are tarballs, etc.
-
-Also while asdf has some provision to deal with versions, it's not complete yet AFAIK. Quicklisp has no provision at all: you get the "current" version of the ql distribution.
-
-(remember also that you can use other quicklisp distributions, such as the https://ultralisp.org)
-
-But for projects we have to deal with versions (branches, tags, and sometimes even specific commit).
-
-For example, Google repo command (used for android sources) gathers git repositories and lists specific commits to integrate.
-
-A similar way with git submodules too.
-
-So we could specify a new tool, like quicklisp, but for example that would use only github and gitlab references, where instead of having a specific set of systems would target (potentially) all the repos. You would write a project definition file that would list the url and commit (or tag or branch) of all your dependencies, and the build systems to use to build them (asd, make, cmake, ant, whatever).  So a command would fetch or
-
-update them, and build them, including non CL (asd) dependencies.
-
-Actually, it seems that it would be more useful than quicklisp, and even simplier to implement (and there would be no management (no curation) of the system list).  For simple 1-system projects, we could imply the project definition file>  (project-load :informatimago/lisp) would find github.com/informatimago/lisp alone and would find the asd file inside and load it.  B
-
-but users could write project-definition files as mentionned for more complex projects requiring more depndencies.
-
-And the advantage is that we could easily implement more advanced features using github/gitlab such as dealing with issues, merge request/pull requests, wiki, etc.
-
-I think we have a project here!
+In the most automatic and simple use case, typing the following expression:
 
 ```
-(ergo :my-project)  loads my-project.ergo and downloads and compile stuff.
+(ergo:load :informatimago/lisp)
 ```
+
+will automatically:
+
+1- `git clone git@github.com:informatimago/lisp.git` and any
+   dependency specified in the asd file found in this repository,
+
+2- `asdf:compile-op` the asd system present in this cloned repository,
+   and:
+
+3- `asdf:load-op` said asd system.
+
+## IRC
+
+There's an irc channel for discussion about this project: irc://irc.libera.chat/#clergo
