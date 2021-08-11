@@ -44,3 +44,44 @@ will automatically:
 ## IRC
 
 There's an irc channel for discussion about this project: irc://irc.libera.chat/#clergo
+
+## Similar systems
+
+### common-lisp-repo
+
+Common interface for version control systems.
+
+Repo allows you to use source repositories directly as ASDF-installable packages and keep them synced with upstream for development purposes.
+
+Each repo is installed in a subdirectory. Github repositories are installed in the user subdirectory.
+
+https://github.com/common-lisp-repo/repo
+
+### Common Lisp Package Manager
+
+A package manager for Common Lisp that strives to cleanly separate the
+package manager process itself from the client image that uses it.
+
+cf. https://gitlab.common-lisp.net/clpm/clpm/-/blob/master/docs/papers/ELS-21/main.pdf
+
+Sophisticated; tries to manage multiple versions (uses a groveler and
+a worker process to avoid collisions between dependency versions).
+Seems a little brittle.
+
+https://gitlab.common-lisp.net/clpm/clpm
+
+### Google repo
+
+Repo is a tool built on top of Git. Repo helps manage many Git
+repositories, does the uploads to revision control systems, and
+automates parts of the development workflow. Repo is not meant to
+replace Git, only to make it easier to work with Git. The repo command
+is an executable Python script that you can put anywhere in your path.
+
+(uses git submodules).
+
+https://android.googlesource.com/tools/repo
+
+
+
+https://github.com/russell/cl-git/
