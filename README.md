@@ -82,6 +82,9 @@ is an executable Python script that you can put anywhere in your path.
 
 https://android.googlesource.com/tools/repo
 
-
+### cl-git
 
 https://github.com/russell/cl-git/
+
+### multi-repo vs. monorepo
+https://css-tricks.com/from-a-single-repo-to-multi-repos-to-monorepo-to-multi-monorepo/
