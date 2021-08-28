@@ -327,6 +327,18 @@ launch pipelines
 create/edit pipelines
 
 
+* git collections
+
+- gitlab collections:
+
+http://gitlab.org
+http://framasoft.org
+
+- non-gitlab collections:
+http://github.com
+http://sourcehut.org http://sr.ht
+http://common-lisp.net
+https://gitea.io/en-us/
 
 
 * Epilogue                                                         :noexport:
