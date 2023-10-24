@@ -5,9 +5,9 @@
 ;;;;SYSTEM:             Common-Lisp
 ;;;;USER-INTERFACE:     NONE
 ;;;;DESCRIPTION
-;;;;    
+;;;;
 ;;;;    A prototype to test the idea.
-;;;;    
+;;;;
 ;;;;AUTHORS
 ;;;;    <PJB> Pascal J. Bourguignon <pjb@informatimago.com>
 ;;;;MODIFICATIONS
@@ -15,19 +15,19 @@
 ;;;;BUGS
 ;;;;LEGAL
 ;;;;    AGPL3
-;;;;    
+;;;;
 ;;;;    Copyright Pascal J. Bourguignon 2021 - 2021
-;;;;    
+;;;;
 ;;;;    This program is free software: you can redistribute it and/or modify
 ;;;;    it under the terms of the GNU Affero General Public License as published by
 ;;;;    the Free Software Foundation, either version 3 of the License, or
 ;;;;    (at your option) any later version.
-;;;;    
+;;;;
 ;;;;    This program is distributed in the hope that it will be useful,
 ;;;;    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;;;;    GNU Affero General Public License for more details.
-;;;;    
+;;;;
 ;;;;    You should have received a copy of the GNU Affero General Public License
 ;;;;    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;**************************************************************************
@@ -57,7 +57,7 @@
                 (symbol (normalize-symbol element))
                 (string element)))
             designator))
-  
+
   (defun quote-elements (list)
     (mapcar (lambda (element) `(quote ,element)) list)))
 
@@ -72,6 +72,7 @@
   (print-parseable-object (collection stream :type t :identity t)
                           name))
 
+
 (defclass git-collection (collection)
   ((protocol  :initarg :protocol  :accessor collection-git-protocol  :initform :ssh)
    (user      :initarg :user      :accessor collection-git-user      :initform nil)
@@ -80,18 +81,20 @@
    (extension :initarg :extension :accessor collection-git-extension :initform nil)
    (kind      :initarg :kind      :accessor collection-kind          :initform :git)))
 
+(defmethod print-object ((collection git-collection) stream)
+  (print-parseable-object (collection stream :type t :identity t)
+                          name protocol user server root extension kind))
+
 ;; TODO: subclasses for gitlab github gitea etc.
+;; example of gitea repo: https://git.mfiano.net/mfiano/cricket
 
 ;; TODO: for a given collection class, there may be several url scheme to access the same repository (perhaps with different access rights).  We should manage them.
 ;;       eg. if we start with a http:// url, for a read-only access, and want to switch to write access with a ssh or git url, that should be possible and easy. (it's just a git remote set-url).
 
-(defmethod print-object ((collection git-collection) stream)
-  (print-parseable-object (collection stream :type t :identity t)
-                          protocol user server root extension))
 
 
 (defgeneric repository-fetch-url (collection relative-path))
-(defgeneric repository-fetch-url-format (collection protocl))
+(defgeneric repository-fetch-url-format (collection protocol))
 
 (defmethod repository-fetch-url-format ((collection git-collection) (protocol (eql :ssh)))
   "~A@~A:~@[~A/~]~A~@[~A~]")
@@ -145,6 +148,22 @@
    (collection   :initarg :collection                 :accessor repository-collection)
    (local-path   :initarg :local-path   :initform nil :accessor repository-local-path)))
 
+(defmethod print-object ((repository repository) stream)
+  (print-parseable-object (repository stream :type t :identity t)
+                          designator collection local-path))
+
+
+(defvar *repositories* (make-hash-table :test 'equal))
+
+(defgeneric key (object))
+(defun intern-repository (repository-designator &key collection local-path)
+  (or (gethash repository-designator *repositories*)
+      (setf (gethash (key repository-designator) *repositories*)
+            (make-instance 'repository :designator repository-designator
+                                       :collection collection
+                                       :local-path local-path))))
+
+
 (defgeneric probe-repository (designator local-path))
 (defgeneric clone-repository (designator local-path))
 (defgeneric pull-repository (designator local-path))
@@ -184,6 +203,10 @@
 (defclass asdf-builder (builder)
   ((asd-file :initarg :asd-file :reader asd-file)))
 
+(defmethod print-object ((builder asdf-builder) stream)
+  (print-parseable-object (builder stream :type t :identity t)
+                          asd-file))
+
 (defmethod repository-asdf-system ((repository repository) (builder asdf-builder))
   ;; TODO: repository-asdf-system it's not that good to use an infered system to build a repository! The user should choose the root asdf system, and asdf gives us the dependencies systesm.
   ;; Silly Q&D system name from asd file:
@@ -210,6 +233,10 @@
 (defclass repository-designator ()
   ((url       :initarg :url       :reader designator-url)))
 
+(defmethod print-object ((designator repository-designator) stream)
+  (print-parseable-object (designator stream :type t :identity t)
+                          url))
+
 (defclass git-repository-designator (repository-designator)
   ((kind      :initarg :kind      :reader designator-kind)
    (tip-kind  :initarg :tip-kind  :reader designator-tip-kind)
@@ -218,6 +245,15 @@
 (defmethod print-object ((designator git-repository-designator) stream)
   (print-parseable-object (designator  stream :type t)
                           url kind tip-kind tip-value))
+
+
+(defmethod key ((designator repository-designator))
+  (designator-url designator))
+(defmethod key ((designator git-repository-designator))
+  (append (list 'git-repository (designator-url designator)
+                :kind (designator-kind designator))
+          (when (designator-tip-kind designator)
+            (list (designator-tip-kind designator) (designator-tip-value designator)))))
 
 
 (defun parse-git-url (url)
@@ -247,7 +283,7 @@
     (cond
       ((string-equal "github.com" host) :github)
       ((search "gitlab" host)           :gitlab)
-      ((search "gitea"  host)           :gitea)   
+      ((search "gitea"  host)           :gitea)
       (t                                :plain))))
 
 
@@ -291,7 +327,22 @@
 
 
 (defgeneric compute-repository-local-path (collection relative-path))
-(defmethod compute-repository-local-path ((collection git-collection) relative-path)
+(defmethod compute-repository-local-path ((collection git-collection) (relative-path string))
+  ;; TODO: use the designator to specific tag/branch/release/commit.
+  ;; TODO: get the root from configuration (perhaps xdg something, etc) default to (user-homedir-pathnamea)
+  (let ((home (user-homedir-pathname)))
+    (merge-pathnames (make-pathname
+                      :directory (append (list :relative "ergo" "repositories"
+                                               (collection-git-server collection))
+                                         (split-sequence #\/ relative-path :remove-empty-subseqs t)
+                                         ;; TODO: find the default branch name:
+                                         (list "master"))
+                      :case :local
+                      :defaults home)
+                     home nil)))
+
+#-(and)
+(defmethod compute-repository-local-path ((collection git-collection) (designator git-repository-desig))
   ;; TODO: use the designator to specific tag/branch/release/commit.
   ;; TODO: get the root from configuration (perhaps xdg something, etc) default to (user-homedir-pathnamea)
   (let ((home (user-homedir-pathname)))
@@ -394,8 +445,12 @@
    (dependencies :initarg :dependencies :initform '() :accessor project-dependencies)
    (attributes   :initarg :attributes   :initform '() :accessor project-attributes)))
 
+(defmethod print-object ((project project) stream)
+  (print-parseable-object (project stream :type t :identity t)
+                          repository dependencies attributes))
+
 (defgeneric project-designator (project)
-  (:method ((project project)) (repository-designator (project-repository project))))
+  (:method ((project project))  (project-repository project)))
 
 (defgeneric project-collection (project)
   (:method ((project project)) (repository-collection (project-repository project))))
@@ -468,13 +523,13 @@
 (defmethod update-project ((project project))
   ;; TODO: this is a naive dependency update; make it better.
   (dolist (dependency (cons (project-repository project) (project-dependencies project)))
-    (update dependency)))
+    (update (intern-repository dependency))))
 
 (defmethod build-project ((project project))
   ;; TODO: Naive dependency builds!
   (let ((dependency-directories (project-repositories-local-directories project)))
     (dolist (dependency (cons (project-repository project) (project-dependencies project)))
-      (build-repository dependency dependency-directories))))
+      (build-repository (intern-repository dependency) dependency-directories))))
 
 
 ;;; --------------------------------------------------------------------------
