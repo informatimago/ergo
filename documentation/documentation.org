@@ -151,7 +151,7 @@ The =quicklisp= client uses data in
 =~/quicklisp/dists/quicklisp/releases.txt= to fetch the tarball.
 
 eg.:
-#+BEING_EXAMPLE
+#+BEGIN_EXAMPLE
 1am http://beta.quicklisp.org/archive/1am/2014-11-06/1am-20141106-git.tgz 3490 c5e83c329157518e3ebfeef63e4ac269 83dfee1159cc630cc2453681a7caaf745f987d41 1am-20141106-git 1am.asd
 #+END_EXAMPLE
 

@@ -2,6 +2,7 @@
 
 NAME=specfications
 PDFS=$(NAME).pdf
+EMACS=/opt/emacs-small/bin/emacs
 all:documents \
 	specifications-todo.org
 
@@ -25,7 +26,7 @@ $(NAME)-todo.org $(NAME)-todo.sha256:$(NAME).org
 # Generate PDF from org-mode document.
 %.pdf:%.org
 	-rm -f $@
-	emacs --batch \
+	$(EMACS) --batch \
 		--eval '(find-file "'$<'")' \
 		--funcall org-latex-export-to-pdf \
 		--kill

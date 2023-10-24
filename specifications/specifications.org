@@ -2,7 +2,7 @@
 
 #+AUTHOR: Pascal J. Bourguignon
 #+EMAIL: pjb@informatimago.com
-#+DATE: 09 August 2021
+#+DATE: 24 December 2022
 #+TITLE: Specifications of the ERGO Project Builder
 
 * Prologue                                                         :noexport:
@@ -78,12 +78,15 @@ Program, and Project Builder.
 
 ** Versions of this document :noexport:
 
-| Version | Date       | Modification | Author             |
-|---------+------------+--------------+--------------------|
-|   0.0.1 | 2021/08/08 | Created.     | Pascal Bourguignon |
-|---------+------------+--------------+--------------------|
-|   0.0.2 |            |              |                    |
-|---------+------------+--------------+--------------------|
+| Version | Date       | Modification           | Author |
+|---------+------------+------------------------+--------|
+|   0.0.1 | 2021/08/08 | Created.               | PJB    |
+|   0.0.2 | 2022/12/24 | Formatting corrections | PJB    |
+|         |            |                        |        |
+|---------+------------+------------------------+--------|
+
+PJB = Pascal Bourguignon
+
 
 #+LATEX: \newpage
 
@@ -95,20 +98,22 @@ ergo - Project Dependencies Management Program and Project Builder.
 The purpose of =ergo= is:
 
 1- fetch from =git= repositories a project and its dependencies.
+
 2- build the dependencies and the project.
+
 3- load, test or run the project.
 
 Building a project will depend on the kind of project, and may require
 some help from the user, specifying the commands to use.  However, it
-is expected that some common classes of projects be recognized and
-built automatically by =ergo=.  (The initial class of projects is that
+is expected that some common classes of project be recognized and
+built automatically by =ergo=.  (The initial class of project is that
 of Common Lisp systems defined =asd= files.)
 
 The loading, testing or running of the project will depend on the kind
 of project and environment, and may require some help from the user,
 specifying the commands to use.  However, it is expected that useful
-classes of projects can be recognized and handled automatically by
-=ergo=. (The initial class of projects is that of Common Lisp systems
+classes of project can be recognized and handled automatically by
+=ergo=. (The initial class of project is that of Common Lisp systems
 defined with =asd= files, that can be loaded in the current lisp
 image, and tested thru =asdf:test-op= (or some other expression
 specified by the user in the ergo file).  Running a Common Lisp system
@@ -119,9 +124,9 @@ require some user input.
 
 In the most automatic and simple use case, typing the following expression:
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC lisp
 (ergo:load :informatimago/lisp)
-#+END_EXAMPLE
+#+END_SRC
 
 will automatically:
 
@@ -152,9 +157,10 @@ The =quicklisp= client uses data in
 =~/quicklisp/dists/quicklisp/releases.txt= to fetch the tarball.
 
 eg.:
-#+BEING_EXAMPLE
+
+#+BEGIN_SRC
 1am http://beta.quicklisp.org/archive/1am/2014-11-06/1am-20141106-git.tgz 3490 c5e83c329157518e3ebfeef63e4ac269 83dfee1159cc630cc2453681a7caaf745f987d41 1am-20141106-git 1am.asd
-#+END_EXAMPLE
+#+END_SRC
 
 So =(quickload :1am)= will fetch
 http://beta.quicklisp.org/archive/1am/2014-11-06/1am-20141106-git.tgz,
@@ -203,18 +209,18 @@ more useful and simplier to implement (there is no need for any
 management or curation of the system list).  For simple 1-system
 projects, even the ergo project definition file can be infered.
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC lisp
 (project-load :informatimago/lisp)
-#+END_EXAMPLE
+#+END_SRC
 
 would find =git://github.com:informatimago/lisp= alone and would find
 the =asd= file inside and load it.
 
 While:
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC lisp
 (project-load :com-informatimago/com-informatimago)
-#+END_EXAMPLE
+#+END_SRC
 
 would find =git://gitlab.com:com-informatimago/com-informatimago=
 alone and would find the =asd= file inside and load it.
@@ -229,10 +235,11 @@ request/pull requests, wiki, etc.
 
 I think we have a project here!
 
-#+BEGIN_EXAMPLE
-(ergo :my-project) ; loads my-project.ergo and downloads and compile stuff.
-#+END_EXAMPLE
+#+BEGIN_SRC lisp
+(ergo :my-project) ; loads my-project.ergo, and downloads and compiles stuff.
+#+END_SRC
 
+#+LATEX: \newpage
 * Specifications
 ** Repository Collections
 
@@ -263,8 +270,7 @@ will be implemented later.
 
 - custom repository collections.
 
-
-#+BEGIN_CODE lisp
+#+BEGIN_SRC lisp
 
 (defmethod repository-fetch-url (collection relative-path)
   (format nil "~A@~A:~:[~A/~]~A~:[~A~]"
@@ -273,7 +279,7 @@ will be implemented later.
           (collection-git-root      collection)
           relative-path
           (collection-git-extension collection)))
-#+END_CODE
+#+END_SRC
 
 #+BEGIN_EXMPLE
 common-lisp     https://gitlab.common-lisp.net/asdf/asdf.git
@@ -298,13 +304,13 @@ A completely specific repository designator is a compound structure containing:
 - optionally, a kind keyword, to characterize the kind of collection
   the repository is stored in (gitlab, github, gitea, plain).
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC
 (git <url> [:kind gitlab|github|gitea|plain]
            [ :branch  <name>
            | :tag     <name> | :latest ] |
            | :release <name> | :latest ] |
            | :commit  <hash> ])
-#+END_EXAMPLE
+#+END_SRC
 
 If the kind is not given, it is infered from the url:
 
@@ -338,7 +344,7 @@ since git commits are normally frozen.  (A command will be specified
 to force pulling and checking out the commit again, in case the
 history is rewritten).
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC lisp
 ;; A master branch tracking repository designator:
 (git "git@gitlab.com:com-informatimago/com-informatimago.git")
 
@@ -350,7 +356,7 @@ history is rewritten).
 
 ;; A specific commit repository designator:
 (git "git@gitlab.com:patchwork/mclgui.git" :commit "4d16a400a29c0683e4236f1c5fb61e4e09f56743")
-#+END_EXAMPLE
+#+END_SRC
 
 *** Simplified Repository Designator
 
@@ -367,7 +373,7 @@ repository designator/:
 /Simplified repository designator/ may also be compounded with an
 optional branch, tag or commit hash:
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC lisp
 ;; A master branch tracking repository designator:
 "com-informatimago/com-informatimago"
 
@@ -379,7 +385,7 @@ optional branch, tag or commit hash:
 
 ;; A specific commit repository designator:
 ("patchwork/mclgui" "4d16a400a29c0683e4236f1c5fb61e4e09f56743")
-#+END_EXAMPLE
+#+END_SRC
 
 Note: since the actual /specific repository designator/ selected will
 depend on the order of the /repository collection/ in the search,
@@ -406,7 +412,7 @@ files, so a user may write a complete =ergo= project file listing all
 the dependencies.
 
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC lisp
 (ergo:project
     :designator <designator>
     :dependencies (<designator> …)
@@ -417,12 +423,12 @@ the dependencies.
     :author <string>
     :date <string>
     :version <string>)
-#+END_EXAMPLE
+#+END_SRC
 
 Note: clage contains a com.informatimago.clage.asd file, with the
 following asdf system dependencies:
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC lisp
 ("ironclad"
  "babel"
  "split-sequence"
@@ -430,11 +436,11 @@ following asdf system dependencies:
  "com.informatimago.common-lisp.cesarum"
  "com.informatimago.clext.shell"
  "com.informatimago.clext.character-sets")
-#+END_EXAMPLE
+#+END_SRC
 
 Then one could write an =ergo= project file such as:
 
-#+BEGIN_CODE lisp
+#+BEGIN_SRC lisp
 (ergo:project
  :designator "git@gitlab.com:informatimago/clage.git"
 
@@ -457,7 +463,7 @@ Then one could write an =ergo= project file such as:
  :author "Pascal J. Bourguignon"
  :version "1.0.1"
  :license "AGPL3")
-#+END_EXAMPLE
+#+END_SRC
 
 Notes:
 
@@ -491,28 +497,28 @@ their own clones to avoid any conflict.
 
 Let's say we store the repositories in =~/ergo/repositories/=
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC
 ~/ergo/repositories/{git-server}/{relative/path}/{branch-or-tag-or-commit}/.git/
-#+END_EXAMPLE
+#+END_SRC
 
 Now we need to specify to asdf what directory to search for
 systems. Since different projects may need different versions of a
 dependencies, =ergo= will have to specify the directories of the
 specific cloned repositories for =asdf= to find the =asd= files.
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC lisp
 (ergo:compile "path-3")
-#+END_EXAMPLE
+#+END_SRC
 
 would do:
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC lisp
 (let ((asdf:*central-registry*
        '(#P"~/ergo/repositories/{git-server}/{relative/path-1}/branch-1/"
          #P"~/ergo/repositories/{git-server}/{relative/path-2}/tag-2/"
          #P"~/ergo/repositories/{git-server}/{relative/path-3}/1d69dbba33a8e51ca287c11637b6051ffcda9d06/")))
    (asdf:oos 'asdf:compile-op "path-3"))
-#+END_EXAMPLE
+#+END_SRC
 
 Perhaps we can shadow similarly the current configuration which could
 be beneficial to specify :tree repos clones.
